@@ -1,0 +1,46 @@
+defaults:
+  llm_provider: ollama
+  embedding_provider: ollama
+  vector_db_provider: chroma
+
+llm:
+  openai:
+    model: gpt-4o-mini
+    base_url: https://api.openai.com/v1
+    temperature: 0.2
+    max_tokens: 1024
+  anthropic:
+    model: claude-3-5-sonnet-latest
+    base_url: https://api.anthropic.com
+    temperature: 0.2
+    max_tokens: 1024
+  google:
+    model: gemini-1.5-pro
+    temperature: 0.2
+    max_tokens: 1024
+  ollama:
+    model: llama3.2
+    base_url: http://localhost:11434
+    temperature: 0.2
+    max_tokens: 1024
+
+embeddings:
+  openai:
+    model: text-embedding-3-small
+    base_url: https://api.openai.com/v1
+  huggingface:
+    model: sentence-transformers/all-MiniLM-L6-v2
+  ollama:
+    model: nomic-embed-text
+    base_url: http://localhost:11434
+
+vector_db:
+  chroma:
+    collection_name: docs
+    persist_directory: ./.chroma
+  faiss:
+    index_path: ./.faiss/index
+  qdrant:
+    collection_name: docs
+    url: http://localhost:6333
+    prefer_grpc: false

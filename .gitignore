@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg-info/
+.venv/
+venv/
+
+# Environment
+.env
+
+# Tooling
+.pytest_cache/
+.ruff_cache/
+
+# Vector stores / local DB
+.chroma/
+.faiss/
+
+# User data (do not push)
+data/*
+!data/.gitkeep
+
+# OS/editor
+.DS_Store
+Thumbs.db

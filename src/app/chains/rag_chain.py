@@ -11,6 +11,13 @@ def _format_documents(documents) -> str:
     return "\n\n".join(doc.page_content for doc in documents)
 
 
+def _resolve_documents(payload: dict, retriever: BaseRetriever):
+    documents = payload.get("documents")
+    if documents is not None:
+        return documents
+    return retriever.invoke(payload["input"])
+
+
 def build_rag_chain(llm: BaseChatModel, retriever: BaseRetriever):
     prompt = ChatPromptTemplate.from_messages(
         [
@@ -29,8 +36,7 @@ def build_rag_chain(llm: BaseChatModel, retriever: BaseRetriever):
     rag_pipeline = (
         RunnablePassthrough.assign(
             context=(
-                RunnableLambda(lambda x: x["input"])
-                | retriever
+                RunnableLambda(lambda x: _resolve_documents(x, retriever))
                 | RunnableLambda(_format_documents)
             )
         )

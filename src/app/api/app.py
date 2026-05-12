@@ -5,6 +5,7 @@ from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
 from fastapi import File, Form, UploadFile
+from langchain_core.documents import Document
 
 from app.api.schemas import (
     AskRequest,
@@ -20,6 +21,21 @@ from app.chains.rag_chain import build_rag_chain
 from app.config.loader import load_app_config
 from app.factories import build_embeddings, build_llm, build_vector_store
 from app.ingestion.index_documents import SUPPORTED_EXTENSIONS, load_documents, split_documents
+
+
+def _to_ranked_sources(documents: list[Document], preview_chars: int = 240):
+    sources = []
+    for idx, doc in enumerate(documents, start=1):
+        source = doc.metadata.get("source") if isinstance(doc.metadata, dict) else None
+        preview = " ".join(doc.page_content.split())[:preview_chars]
+        sources.append(
+            {
+                "rank": idx,
+                "source": str(source) if source is not None else None,
+                "preview": preview,
+            }
+        )
+    return sources
 
 
 def create_app() -> FastAPI:
@@ -84,13 +100,30 @@ def create_app() -> FastAPI:
             cfg = load_app_config()
             embeddings = build_embeddings(cfg)
             vector_store = build_vector_store(cfg, embeddings)
-            retriever = vector_store.as_retriever(search_kwargs={"k": payload.k})
+
+            retriever_kwargs = {"k": payload.k}
+            retriever_search_type = "similarity"
+            if payload.ranking_strategy == "mmr":
+                retriever_search_type = "mmr"
+                retriever_kwargs["fetch_k"] = payload.fetch_k or max(payload.k * 4, payload.k)
+                retriever_kwargs["lambda_mult"] = payload.lambda_mult
+
+            retriever = vector_store.as_retriever(
+                search_type=retriever_search_type,
+                search_kwargs=retriever_kwargs,
+            )
+
+            ranked_documents = retriever.invoke(payload.question)
 
             llm = build_llm(cfg)
             rag = build_rag_chain(llm, retriever)
-            result = rag.invoke({"input": payload.question})
+            result = rag.invoke({"input": payload.question, "documents": ranked_documents})
             answer = result.get("answer", "No answer returned")
-            return AskResponse(answer=answer)
+            return AskResponse(
+                answer=answer,
+                ranking_strategy=payload.ranking_strategy,
+                sources=_to_ranked_sources(ranked_documents),
+            )
         except FileNotFoundError as exc:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
         except Exception as exc:

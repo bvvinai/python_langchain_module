@@ -45,7 +45,7 @@ dev = [
 ]
 
 [project.scripts]
-langchain-app = "app.cli:app"
+langchain-app = "app.__main__:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

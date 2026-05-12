@@ -196,10 +196,23 @@ Ask with RAG:
 curl -X POST http://127.0.0.1:8000/ask -H "Content-Type: application/json" -d "{\"question\": \"Summarize indexed docs\", \"k\": 4}"
 ```
 
+Ask with MMR ranking:
+
+```bash
+curl -X POST http://127.0.0.1:8000/ask -H "Content-Type: application/json" -d "{\"question\": \"Summarize indexed docs\", \"k\": 4, \"ranking_strategy\": \"mmr\", \"fetch_k\": 16, \"lambda_mult\": 0.5}"
+```
+
 PowerShell alternative:
 
 ```powershell
 $body = @{ question = "Summarize indexed docs"; k = 4 } | ConvertTo-Json
+Invoke-RestMethod http://127.0.0.1:8000/ask -Method Post -ContentType "application/json" -Body $body
+```
+
+PowerShell with MMR ranking:
+
+```powershell
+$body = @{ question = "Summarize indexed docs"; k = 4; ranking_strategy = "mmr"; fetch_k = 16; lambda_mult = 0.5 } | ConvertTo-Json
 Invoke-RestMethod http://127.0.0.1:8000/ask -Method Post -ContentType "application/json" -Body $body
 ```
 
